@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { deleteArticle } from './actions';
@@ -16,7 +16,8 @@ interface Article {
   content: string;
 }
 
-export default function ArticlesPage() {
+// 1. Move all logic into this inner component
+function ArticlesContent() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -76,7 +77,6 @@ export default function ArticlesPage() {
                     <td className="p-4">{article.category}</td>
                     <td className="p-4">{article.author}</td>
                     <td className="p-4">
-                      {/* --- CORRECTED AND CLEANED ACTIONS --- */}
                       <div className="flex gap-4 items-center">
                         <button onClick={() => handleViewClick(article)} className="text-blue-400 hover:underline">
                           View
@@ -104,5 +104,14 @@ export default function ArticlesPage() {
 
       <ViewArticleModal isOpen={isModalOpen} setIsOpen={setIsModalOpen} article={selectedArticle} />
     </>
+  );
+}
+
+// 2. Export the wrapper component with Suspense
+export default function ArticlesPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-900 text-white p-24">Loading...</div>}>
+      <ArticlesContent />
+    </Suspense>
   );
 }
