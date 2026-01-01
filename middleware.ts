@@ -2,6 +2,12 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
+  // 1. Check if keys exist to prevent the 500 Error crash
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    console.warn('Middleware skipped: Missing Supabase Environment Variables');
+    return NextResponse.next();
+  }
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -9,8 +15,8 @@ export async function middleware(request: NextRequest) {
   });
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
       cookies: {
         getAll() {
@@ -33,7 +39,6 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // IMPORTANT: getUser() is more secure than getSession() for middleware
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -49,6 +54,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Only run this middleware on admin routes
   matcher: ['/admin/:path*'],
 };
