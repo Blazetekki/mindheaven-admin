@@ -1,10 +1,20 @@
 'use server';
 
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
+// Helper to get the admin client safely inside functions
+function getAdminClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !key) throw new Error("Missing Supabase Admin Keys");
+  return createClient(url, key);
+}
+
 export async function addModule(formData: FormData) {
+  const supabase = getAdminClient();
   const moduleData = {
     title: formData.get('title') as string,
     subtitle: formData.get('subtitle') as string,
@@ -18,6 +28,7 @@ export async function addModule(formData: FormData) {
 }
 
 export async function updateModule(moduleId: string, formData: FormData) {
+  const supabase = getAdminClient();
   if (!moduleId) return;
   const moduleData = {
     title: formData.get('title') as string,
@@ -33,6 +44,7 @@ export async function updateModule(moduleId: string, formData: FormData) {
 }
 
 export async function deleteModule(formData: FormData) {
+  const supabase = getAdminClient();
   const moduleId = formData.get('moduleId') as string;
   if (!moduleId) return;
   const { error } = await supabase.from('Module').delete().eq('id', moduleId);
@@ -41,6 +53,7 @@ export async function deleteModule(formData: FormData) {
 }
 
 export async function addLesson(formData: FormData) {
+  const supabase = getAdminClient();
   const moduleId = formData.get('moduleId') as string;
   const lessonData = {
     title: formData.get('title') as string,
@@ -54,6 +67,7 @@ export async function addLesson(formData: FormData) {
 }
 
 export async function deleteLesson(formData: FormData) {
+  const supabase = getAdminClient();
   const lessonId = formData.get('lessonId') as string;
   const moduleId = formData.get('moduleId') as string;
   if (!lessonId || !moduleId) return;
@@ -63,6 +77,7 @@ export async function deleteLesson(formData: FormData) {
 }
 
 export async function addLessonStep(formData: FormData) {
+  const supabase = getAdminClient();
   const moduleId = formData.get('moduleId') as string;
   const lessonId = formData.get('lessonId') as string;
   const stepData = {
@@ -79,8 +94,8 @@ export async function addLessonStep(formData: FormData) {
   redirect(path);
 }
 
-// --- ADD THIS NEW FUNCTION ---
 export async function updateLesson(moduleId: string, lessonId: string, formData: FormData) {
+  const supabase = getAdminClient();
   if (!lessonId || !moduleId) return;
 
   const lessonData = {
@@ -98,16 +113,12 @@ export async function updateLesson(moduleId: string, lessonId: string, formData:
     return;
   }
 
-  // Refresh the module detail page
   revalidatePath(`/admin/modules/${moduleId}`);
-
-  // Redirect back to the module detail page
   redirect(`/admin/modules/${moduleId}`);
 }
 
-
-// --- ADD THIS delete lesson steps FUNCTION ---
 export async function deleteLessonStep(formData: FormData) {
+  const supabase = getAdminClient();
   const stepId = formData.get('stepId') as string;
   const lessonId = formData.get('lessonId') as string;
   const moduleId = formData.get('moduleId') as string;
@@ -124,12 +135,11 @@ export async function deleteLessonStep(formData: FormData) {
     return;
   }
 
-  // Refresh the data on the lesson detail page
   revalidatePath(`/admin/modules/${moduleId}/lessons/${lessonId}`);
 }
 
-// --- ADD THIS updateLessonStep FUNCTION ---
 export async function updateLessonStep(moduleId: string, lessonId: string, stepId: string, formData: FormData) {
+  const supabase = getAdminClient();
   if (!stepId || !lessonId || !moduleId) return;
 
   const stepData = {
