@@ -1,7 +1,7 @@
 'use client'; // This page needs to be a client component to handle notifications
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { deleteModule } from './actions';
@@ -15,7 +15,8 @@ interface Module {
   subtitle: string;
 }
 
-export default function ModulesPage() {
+// 1. Move logic to a separate content component
+function ModulesContent() {
   const [modules, setModules] = useState<Module[]>([]);
   const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
@@ -62,7 +63,7 @@ export default function ModulesPage() {
             </thead>
             <tbody>
               {modules?.map((module) => (
-                <tr key={module.id} className="border-b border-gray-700 hover:bg-gray-700/ ৫০">
+                <tr key={module.id} className="border-b border-gray-700 hover:bg-gray-700/50">
                   <td className="p-4">
                     <Link href={`/admin/modules/${module.id}`} className="hover:text-yellow-400 hover:underline">
                       {module.title}
@@ -91,5 +92,14 @@ export default function ModulesPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+// 2. Export the wrapper component with Suspense
+export default function ModulesPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-900 text-white p-24">Loading modules...</div>}>
+      <ModulesContent />
+    </Suspense>
   );
 }
